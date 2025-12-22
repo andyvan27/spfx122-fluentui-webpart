@@ -1,0 +1,40 @@
+{
+  "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
+  "solution": {
+    "name": "spfx-122-fluentui-webpart-client-side-solution",
+    "id": "9120965c-4537-40a3-8825-2362aabb354f",
+    "version": "1.0.0.0",
+    "includeClientSideAssets": true,
+    "skipFeatureDeployment": true,
+    "isDomainIsolated": false,
+    "developer": {
+      "name": "",
+      "websiteUrl": "",
+      "privacyUrl": "",
+      "termsOfUseUrl": "",
+      "mpnId": "Undefined-1.22.0"
+    },
+    "metadata": {
+      "shortDescription": {
+        "default": "spfx122-fluentui-webpart description"
+      },
+      "longDescription": {
+        "default": "spfx122-fluentui-webpart description"
+      },
+      "screenshotPaths": [],
+      "videoUrl": "",
+      "categories": []
+    },
+    "features": [
+      {
+        "title": "spfx-122-fluentui-webpart Feature",
+        "description": "The feature that activates elements of the spfx-122-fluentui-webpart solution.",
+        "id": "b43ee675-1e68-46fb-97db-1b1ee50afbd5",
+        "version": "1.0.0.0"
+      }
+    ]
+  },
+  "paths": {
+    "zippedPackage": "solution/spfx-122-fluentui-webpart.sppkg"
+  }
+}
