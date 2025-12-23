@@ -13,6 +13,21 @@
         "webpack:///../*": "${workspaceFolder}/*",
         "webpack:///src/*": "${workspaceFolder}/src/*"
       },
+      "preLaunchTask": "SPFx Heft Start",
+      "postDebugTask": "SPFx Heft Stop"
+    },
+    {
+      "name": "Bench hot",
+      "type": "msedge",
+      "request": "launch",
+      "url": "https://6h2p34.sharepoint.com/sites/ansite/_layouts/15/workbench.aspx?debugManifestsFile=https%3A%2F%2Flocalhost%3A4321%2Ftemp%2Fbuild%2Fmanifests.js&debug=true&noredir=true",
+      "webRoot": "${workspaceFolder}",
+      "sourceMaps": true,
+      "sourceMapPathOverrides": {
+        "webpack:///./*": "${workspaceFolder}/*",
+        "webpack:///../*": "${workspaceFolder}/*",
+        "webpack:///src/*": "${workspaceFolder}/src/*"
+      },
       "preLaunchTask": "SPFx Heft Start"
     },
     {
@@ -27,7 +42,8 @@
         "webpack:///../*": "${workspaceFolder}/*",
         "webpack:///src/*": "${workspaceFolder}/src/*"
       },
-      "preLaunchTask": "SPFx Heft Start"
+      "preLaunchTask": "SPFx Heft Start",
+      "postDebugTask": "SPFx Heft Stop"
     }
   ]
 }

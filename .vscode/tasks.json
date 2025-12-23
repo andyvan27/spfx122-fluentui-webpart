@@ -22,6 +22,12 @@
           "endsPattern": "Finished"
         }
       }
+    },
+    {
+      "label": "SPFx Heft Stop",
+      "type": "shell",
+      "command": "npm run stop",
+      "problemMatcher": []
     }
   ]
 }
