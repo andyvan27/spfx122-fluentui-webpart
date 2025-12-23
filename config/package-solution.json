@@ -1,25 +1,25 @@
 {
   "$schema": "https://developer.microsoft.com/json-schemas/spfx-build/package-solution.schema.json",
   "solution": {
-    "name": "spfx-122-fluentui-webpart-client-side-solution",
+    "name": "toy-list",
     "id": "9120965c-4537-40a3-8825-2362aabb354f",
     "version": "1.0.0.0",
     "includeClientSideAssets": true,
     "skipFeatureDeployment": true,
     "isDomainIsolated": false,
     "developer": {
-      "name": "",
-      "websiteUrl": "",
+      "name": "Andy Nguyen",
+      "websiteUrl": "https://github.com/andyvan27/spfx122-fluentui-webpart",
       "privacyUrl": "",
       "termsOfUseUrl": "",
-      "mpnId": "Undefined-1.22.0"
+      "mpnId": ""
     },
     "metadata": {
       "shortDescription": {
-        "default": "spfx122-fluentui-webpart description"
+        "default": "A Toy List in Fluent UI web part built with SPFx 1.12"
       },
       "longDescription": {
-        "default": "spfx122-fluentui-webpart description"
+        "default": "This Toy Lit web part demonstrates the integration of Fluent UI components within a SharePoint Framework (SPFx) web part using version 1.12 of SPFx."
       },
       "screenshotPaths": [],
       "videoUrl": "",
@@ -27,7 +27,7 @@
     },
     "features": [
       {
-        "title": "spfx-122-fluentui-webpart Feature",
+        "title": "toy-list Feature",
         "description": "The feature that activates elements of the spfx-122-fluentui-webpart solution.",
         "id": "b43ee675-1e68-46fb-97db-1b1ee50afbd5",
         "version": "1.0.0.0"
@@ -35,6 +35,6 @@
     ]
   },
   "paths": {
-    "zippedPackage": "solution/spfx-122-fluentui-webpart.sppkg"
+    "zippedPackage": "solution/toy-list.sppkg"
   }
 }

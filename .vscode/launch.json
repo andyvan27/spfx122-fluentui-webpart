@@ -3,7 +3,7 @@
   "configurations": [
     {
       "name": "Bench",
-      "type": "pwa-msedge",
+      "type": "msedge",
       "request": "launch",
       "url": "https://6h2p34.sharepoint.com/sites/ansite/_layouts/15/workbench.aspx?debugManifestsFile=https%3A%2F%2Flocalhost%3A4321%2Ftemp%2Fbuild%2Fmanifests.js&debug=true&noredir=true",
       "webRoot": "${workspaceFolder}",
@@ -17,7 +17,7 @@
     },
     {
       "name": "Page",
-      "type": "pwa-msedge",
+      "type": "msedge",
       "request": "launch",
       "url": "https://6h2p34.sharepoint.com/sites/ansite/SitePages/dev.aspx?debugManifestsFile=https%3A%2F%2Flocalhost%3A4321%2Ftemp%2Fbuild%2Fmanifests.js&debug=true&noredir=true",
       "webRoot": "${workspaceFolder}",

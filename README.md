@@ -2,7 +2,7 @@
 
 ## Summary
 
-SampleSPFX 1.22 webpart using FluentUI, React TypeScript, PnPJs, PnPGraph.
+Sample SPFX 1.22 webpart using FluentUI, React TypeScript, PnPJs, PnPGraph.
 
 ## Used SharePoint Framework Version
 
@@ -37,10 +37,13 @@ npm install -g @microsoft/generator-sharepoint@1.22.0
   - Test (`heft test`)
   - Start (`heft start`)
 
-## Install local workbench
+## Deployment
+- Build solution package
 ```
-npm install @microsoft/sp-webpart-workbench@1.22.0 --save-dev
 ```
+
+- Upload to App Catalogs
+- Publish to SharePoint and Teams
 
 ## References
 
