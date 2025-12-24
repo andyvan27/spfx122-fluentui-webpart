@@ -316,6 +316,29 @@ module.exports = {
         '**/test/*.tsx'
       ],
       rules: {}
+    },
+    {
+      files: ["jest.config.cjs"],
+      env: {
+        node: true
+      },
+      rules: {
+        "no-undef": "off"
+      }
+    },
+    {
+      files: ["tests/**/*.ts"],
+      parserOptions: {
+        project: ["./tsconfig.tests.json"]
+      },
+      env:
+      {
+        jest: true,
+        node: true
+      },
+      rules: {
+        "no-undef": "off"
+      }
     }
   ]
 };

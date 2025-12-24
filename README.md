@@ -50,3 +50,22 @@ npm run package
 npm install @fluentui/react@latest
 npm install @fluentui/react@8.125.3
 ```
+
+## Install PnP
+```
+npm install @pnp/sp@4.17.0 @pnp/graph@4.17.0 @pnp/queryable@4.17.0
+```
+
+## Jest
+### Install
+```
+npm install --save-dev jest ts-jest @types/jest
+npx ts-jest config:init
+```
+### Run
+```
+npx jest
+npx jest --watch
+npx jest --verbose
+```
+

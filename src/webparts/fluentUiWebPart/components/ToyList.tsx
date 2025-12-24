@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { DocLib } from './DocLib';
-import { DocLibClass } from './DocLibClass';
+// import { DocLibClass } from './DocLibClass';
 
 interface ToyListProps {
     description: string;
@@ -25,7 +25,7 @@ export const ToyList: React.FC<ToyListProps> = ({
             </div>
             <div>
                 <DocLib />
-                <DocLibClass />
+                {/* <DocLibClass /> */}
             </div>
         </>
     );
