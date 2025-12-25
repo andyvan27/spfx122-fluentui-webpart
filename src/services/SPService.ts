@@ -1,22 +1,13 @@
 import { spfi, SPFx } from "@pnp/sp";
 
 import "@pnp/sp/webs";
-
 import "@pnp/sp/lists";
 import "@pnp/sp/lists/web";
-
 import "@pnp/sp/fields";
-import "@pnp/sp/fields/select";
-
 import "@pnp/sp/items";
-import "@pnp/sp/items/select";
-
 import "@pnp/sp/folders";
-import "@pnp/sp/folders/files";
-
 import "@pnp/sp/files";
 import "@pnp/sp/files/item";
-import "@pnp/sp/files/select";
 
 import { ISPService } from "./ISPService";
 import { IDocumentDto } from "../dtos/IDocumentDto";
@@ -45,15 +36,15 @@ export class SPService implements ISPService {
                 "FileRef",
                 "Modified",
                 "Editor/Title",
-                "File_x0020_Size",
-                "File_x0020_Type",
+                "File/Length",
+                "File/Name",
                 "*"
             )
-            .expand("Editor")();
+            .expand("Editor", "File")();
 
         return items.map(i => this.mapToDocument(i));
     }
-
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mapToDocument(i: any): IDocumentDto {
         return {
             id: i.Id,
@@ -61,8 +52,10 @@ export class SPService implements ISPService {
             url: i.FileRef,
             modified: new Date(i.Modified),
             modifiedBy: i.Editor?.Title,
-            fileSize: i.File_x0020_Size,
-            fileType: i.File_x0020_Type,
+            fileSize: i.File?.Length ?? 0,
+            fileType: i.FileLeafRef.includes('.')
+                ? i.FileLeafRef.split('.').pop()
+                : "unknown",
 
             // dynamic bag
             fields: { ...i }
@@ -81,6 +74,7 @@ export class SPService implements ISPService {
         return items.map(i => this.mapToListItem(i));
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     private mapToListItem(i: any): IListItemDto {
         return {
             id: i.Id,
@@ -115,6 +109,7 @@ export class SPService implements ISPService {
             .getByTitle(listTitle)
             .renderListDataAsStream({ ViewXml: viewXml });
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return result.Row.map((i: any) => this.mapToListItem(i));
     }
 
@@ -135,6 +130,7 @@ export class SPService implements ISPService {
                 "ListItemAllFields/Id"
             )();
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return files.map((f: any) => ({
             id: f.ListItemAllFields?.Id ?? 0,
             name: f.Name,

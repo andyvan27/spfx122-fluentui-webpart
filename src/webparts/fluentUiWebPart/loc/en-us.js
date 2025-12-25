@@ -1,8 +1,9 @@
+// eslint-disable-next-line no-undef
 define([], function() {
   return {
-    "PropertyPaneDescription": "Description",
+    "PropertyPaneDescription": "List Configuration",
     "BasicGroupName": "Group Name",
-    "DescriptionFieldLabel": "Description Field",
+    "ListTitleFieldLabel": "List Title",
     "AppLocalEnvironmentSharePoint": "Local environment as SharePoint web part",
     "AppLocalEnvironmentTeams": "Local environment as Microsoft Teams app",
     "AppLocalEnvironmentOffice": "Local environment in office.com",

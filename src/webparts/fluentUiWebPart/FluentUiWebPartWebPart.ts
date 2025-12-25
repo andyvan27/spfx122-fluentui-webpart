@@ -13,7 +13,7 @@ import FluentUiWebPart from './components/FluentUiWebPart';
 import { IFluentUiWebPartProps } from './components/IFluentUiWebPartProps';
 
 export interface IFluentUiWebPartWebPartProps {
-  description: string;
+  listTitle: string;
 }
 
 export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluentUiWebPartWebPartProps> {
@@ -25,21 +25,24 @@ export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluen
     const element: React.ReactElement<IFluentUiWebPartProps> = React.createElement(
       FluentUiWebPart,
       {
-        description: this.properties.description,
+        listTitle: this.properties.listTitle,
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
         hasTeamsContext: !!this.context.sdks.microsoftTeams,
-        userDisplayName: this.context.pageContext.user.displayName
+        userDisplayName: this.context.pageContext.user.displayName,
+        context: this.context,
       }
     );
 
     ReactDom.render(element, this.domElement);
   }
 
-  protected onInit(): Promise<void> {
-    return this._getEnvironmentMessage().then(message => {
-      this._environmentMessage = message;
-    });
+  protected async onInit(): Promise<void> {
+    if (!this.properties.listTitle) {
+      this.properties.listTitle = "OpenDocLib";
+    }
+
+    this._environmentMessage = await this._getEnvironmentMessage();
   }
 
   private _getEnvironmentMessage(): Promise<string> {
@@ -106,8 +109,8 @@ export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluen
             {
               groupName: strings.BasicGroupName,
               groupFields: [
-                PropertyPaneTextField('description', {
-                  label: strings.DescriptionFieldLabel
+                PropertyPaneTextField('listTitle', {
+                  label: strings.ListTitleFieldLabel
                 })
               ]
             }

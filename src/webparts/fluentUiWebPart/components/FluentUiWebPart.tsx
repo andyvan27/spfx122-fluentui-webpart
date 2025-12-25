@@ -8,20 +8,22 @@ import { ToyList } from './ToyList';
 export default class FluentUiWebPart extends React.Component<IFluentUiWebPartProps> {
   public render(): React.ReactElement<IFluentUiWebPartProps> {
     const {
-      description,
+      listTitle,
       isDarkTheme,
       environmentMessage,
       hasTeamsContext,
-      userDisplayName
+      userDisplayName,
+      context,
     } = this.props;
 
     return (
       <FluentProvider theme={hasTeamsContext ? isDarkTheme ? teamsDarkTheme : teamsLightTheme : isDarkTheme ? webDarkTheme : webLightTheme}>
         <section className={`${styles.fluentUiWebPart} ${hasTeamsContext ? styles.teams : ''}`}>
           <ToyList
-            description={escape(description)}
+            listTitle={escape(listTitle)}
             environmentMessage={escape(environmentMessage)}
             userDisplayName={escape(userDisplayName)}
+            context={context}
           />
         </section>
       </FluentProvider>

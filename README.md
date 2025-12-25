@@ -4,6 +4,8 @@
 
 Sample SPFX 1.22 webpart using FluentUI, React TypeScript, PnPJs, PnPGraph.
 
+![WebPart](webpart.png)
+
 ## Used SharePoint Framework Version
 
 ![version](https://img.shields.io/badge/version-1.22.0-green.svg)

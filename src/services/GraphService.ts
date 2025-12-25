@@ -92,6 +92,7 @@ export class GraphService implements IGraphService {
     public async getUserPhoto(userId: string): Promise<IUserPhotoDto | undefined> {
         try {
             // Force TS to treat this as a Graph user endpoint, not a DTO
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const userEndpoint = this.graph.users.getById(userId) as any;
 
             const blob = await userEndpoint.photo.getBlob();
@@ -127,10 +128,11 @@ export class GraphService implements IGraphService {
         const objects = await this.graph.me.memberOf();
 
         // Filter only Microsoft 365 Groups
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const groups = objects.filter((o: any) =>
             o["@odata.type"] === "#microsoft.graph.group"
         );
-
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return groups.map((g: any) => ({
             id: g.id ?? "",
             displayName: g.displayName ?? "",
