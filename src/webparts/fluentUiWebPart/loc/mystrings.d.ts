@@ -2,6 +2,7 @@ declare interface IFluentUiWebPartWebPartStrings {
   PropertyPaneDescription: string;
   BasicGroupName: string;
   ListTitleFieldLabel: string;
+  ListViewNameFieldLabel: string;
   AppLocalEnvironmentSharePoint: string;
   AppLocalEnvironmentTeams: string;
   AppLocalEnvironmentOffice: string;

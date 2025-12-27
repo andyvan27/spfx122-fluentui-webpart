@@ -9,6 +9,7 @@ export default class FluentUiWebPart extends React.Component<IFluentUiWebPartPro
   public render(): React.ReactElement<IFluentUiWebPartProps> {
     const {
       listTitle,
+      listViewName,
       isDarkTheme,
       environmentMessage,
       hasTeamsContext,
@@ -21,6 +22,7 @@ export default class FluentUiWebPart extends React.Component<IFluentUiWebPartPro
         <section className={`${styles.fluentUiWebPart} ${hasTeamsContext ? styles.teams : ''}`}>
           <ToyList
             listTitle={escape(listTitle)}
+            listViewName={escape(listViewName)}
             environmentMessage={escape(environmentMessage)}
             userDisplayName={escape(userDisplayName)}
             context={context}

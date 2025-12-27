@@ -10,15 +10,18 @@ export interface ISPService {
   getDocuments(listTitle: string): Promise<IDocumentDto[]>;
 
   /**
-   * Loads raw list items from a SharePoint list and maps them into
-   * the generic IListItem model (id + dynamic field bag).
+   * Loads documents from a SharePoint document library in a paged manner.
    */
-  getListItems(listTitle: string): Promise<IListItemDto[]>;
+  getDocumentsPaged(
+        listTitle: string,
+        viewFieldNames: string[],
+        pageSize?: number
+    ): AsyncGenerator<IDocumentDto[], void, unknown>;
 
   /**
    * Loads list fields (columns) for dynamic column generation.
    */
-  getListFields(listTitle: string): Promise<IFieldInfoDto[]>;
+  getListFields(listTitle: string, viewName?: string): Promise<IFieldInfoDto[]>
 
   /**
    * Executes a CAML query and returns raw items mapped into IListItem.

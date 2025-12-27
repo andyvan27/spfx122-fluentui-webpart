@@ -14,6 +14,7 @@ import { IFluentUiWebPartProps } from './components/IFluentUiWebPartProps';
 
 export interface IFluentUiWebPartWebPartProps {
   listTitle: string;
+  listViewName: string;
 }
 
 export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluentUiWebPartWebPartProps> {
@@ -26,6 +27,7 @@ export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluen
       FluentUiWebPart,
       {
         listTitle: this.properties.listTitle,
+        listViewName: this.properties.listViewName,
         isDarkTheme: this._isDarkTheme,
         environmentMessage: this._environmentMessage,
         hasTeamsContext: !!this.context.sdks.microsoftTeams,
@@ -40,6 +42,9 @@ export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluen
   protected async onInit(): Promise<void> {
     if (!this.properties.listTitle) {
       this.properties.listTitle = "OpenDocLib";
+    }
+    if (!this.properties.listViewName) {
+      this.properties.listViewName = "All Documents";
     }
 
     this._environmentMessage = await this._getEnvironmentMessage();
@@ -111,6 +116,9 @@ export default class FluentUiWebPartWebPart extends BaseClientSideWebPart<IFluen
               groupFields: [
                 PropertyPaneTextField('listTitle', {
                   label: strings.ListTitleFieldLabel
+                }),
+                PropertyPaneTextField('listViewName', {
+                  label: strings.ListViewNameFieldLabel
                 })
               ]
             }

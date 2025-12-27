@@ -5,12 +5,13 @@ import { Announced } from '@fluentui/react/lib/Announced';
 import { DetailsList, DetailsListLayoutMode, Selection, SelectionMode, IColumn } from '@fluentui/react/lib/DetailsList';
 import { MarqueeSelection } from '@fluentui/react/lib/MarqueeSelection';
 import { mergeStyleSets } from '@fluentui/react/lib/Styling';
-import { TooltipHost } from '@fluentui/react';
+import { Link, PrimaryButton, TooltipHost } from '@fluentui/react';
 import { Text } from '@fluentui/react/lib/Text';
-import { Link } from '@fluentui/react/lib/Link';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPService } from '../../../services/SPService';
 import { IDocumentDto } from '../../../dtos/IDocumentDto';
+import { PagedLoader } from '../../../services/paging/PagedLoader';
+import { IFieldInfoDto } from '../../../dtos/IFieldInfoDto';
 
 const classNames = mergeStyleSets({
   fileIconHeaderIcon: {
@@ -75,100 +76,28 @@ export interface IDocument {
   dateModifiedValue: number;
   fileSize: string;
   fileSizeRaw: number;
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  fields: Record<string, any>;
 }
 
 interface DocLibProps {
   context: WebPartContext;
   listTitle: string;
+  listViewName?: string;
 }
 
-export const DocLib: React.FC<DocLibProps> = ({ context, listTitle }) => {
+export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listViewName }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
   const [allItems, setAllItems] = React.useState<IDocument[]>([]);
   const [items, setItems] = React.useState<IDocument[]>([]);
-  const [columns, setColumns] = React.useState<IColumn[]>(() => {
-    return [
-      {
-        key: 'column1',
-        name: 'File Type',
-        className: classNames.fileIconCell,
-        iconClassName: classNames.fileIconHeaderIcon,
-        ariaLabel: 'Column operations for File type, Press to sort on File type',
-        iconName: 'Page',
-        isIconOnly: true,
-        fieldName: 'fileType',
-        minWidth: 16,
-        maxWidth: 16,
-        onRender: (item: IDocument) => (
-          <TooltipHost content={`${item.fileType} file`}>
-            <img src={item.iconName} className={classNames.fileIconImg} alt={`${item.fileType} file icon`} />
-          </TooltipHost>
-        ),
-      },
-      {
-        key: 'column2',
-        name: 'Name',
-        fieldName: 'name',
-        minWidth: 210,
-        maxWidth: 350,
-        isRowHeader: true,
-        isResizable: true,
-        isSorted: true,
-        isSortedDescending: false,
-        sortAscendingAriaLabel: 'Sorted A to Z',
-        sortDescendingAriaLabel: 'Sorted Z to A',
-        data: 'string',
-        onRender: (item: IDocument) => (
-          // eslint-disable-next-line react/jsx-no-bind
-          <Link onClick={() => onItemInvoked(item)} underline>
-            {item.name}
-          </Link>
-        ),
-        isPadded: true,
-      },
-      {
-        key: 'column3',
-        name: 'Date Modified',
-        fieldName: 'dateModifiedValue',
-        minWidth: 70,
-        maxWidth: 90,
-        isResizable: true,
-        data: 'number',
-        onRender: (item: IDocument) => <span>{item.dateModified}</span>,
-        isPadded: true,
-      },
-      {
-        key: 'column4',
-        name: 'Modified By',
-        fieldName: 'modifiedBy',
-        minWidth: 70,
-        maxWidth: 90,
-        isResizable: true,
-        isCollapsible: true,
-        data: 'string',
-        onRender: (item: IDocument) => <span>{item.modifiedBy}</span>,
-        isPadded: true,
-      },
-      {
-        key: 'column5',
-        name: 'File Size',
-        fieldName: 'fileSizeRaw',
-        minWidth: 70,
-        maxWidth: 90,
-        isResizable: true,
-        isCollapsible: true,
-        data: 'number',
-        onRender: (item: IDocument) => <span>{item.fileSize}</span>,
-      },
-    ];
-  });
+  const [columns, setColumns] = React.useState<IColumn[]>([]);
 
   const [selectionDetails, setSelectionDetails] = React.useState<string>('No items selected');
   const [isModalSelection, setIsModalSelection] = React.useState<boolean>(false);
   const [isCompactMode, setIsCompactMode] = React.useState<boolean>(false);
-  const [announcedMessage, setAnnouncedMessage] = React.useState<string | undefined>(undefined);
   const getKey = React.useCallback((item: IDocument) => item.key, []);
 
   const selectionRef = React.useRef<Selection | null>(null);
@@ -183,28 +112,53 @@ export const DocLib: React.FC<DocLibProps> = ({ context, listTitle }) => {
 
   const service = React.useMemo(() => new SPService(context), [context]);
 
-  React.useEffect(() => {
-    const load = async (): Promise<void> => {
-      try {
-        const dtos = await service.getDocuments(listTitle);
+  const loaderRef = React.useRef<PagedLoader<IDocumentDto> | null>(null);
 
-        const mapped = dtos.map(mapDtoToDocument);
+  React.useEffect(() => {
+    const load = async () => {
+      try {
+        // 1. Load dynamic fields
+        const fields = await service.getListFields(listTitle, listViewName);
+        const viewFieldNames = fields.map(f => f.internalName);
+
+        const dynamicColumns: IColumn[] = fields
+          .filter(f => !f.hidden) // skip hidden fields
+          .map(f => ({
+            key: f.internalName,
+            name: f.internalName === 'DocIcon' ? '' : f.title,
+            fieldName: f.internalName,
+            minWidth: f.internalName === 'DocIcon' ? 16 : 120,
+            iconName: f.internalName === 'DocIcon' ? 'Page' : undefined,
+            maxWidth: f.internalName === 'DocIcon' ? 16 : 300,
+            isResizable: true,
+            isSorted: false,
+            isSortedDescending: false,
+            data: f.type,
+            onRender: (item: IDocument) => renderDynamicCell(item, f)
+          }));
+
+        setColumns(dynamicColumns);
+
+        // 2. Load items using your existing getDocumentsPaged
+        const iterator = service.getDocumentsPaged(listTitle, viewFieldNames, 5);
+        loaderRef.current = new PagedLoader(iterator);
+
+        const firstPage = await loaderRef.current.loadNextPage();
+        const mapped = firstPage.map(mapDtoToDocument);
 
         setAllItems(mapped);
         setItems(mapped);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unknown error";
-        setError(message);
+
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
       } finally {
         setLoading(false);
       }
     };
 
-    (async () => {
-      await load();
-    })().catch(() => { });
+    load().catch(() => { });
+  }, [context, listTitle, listViewName]);
 
-  }, [context, listTitle]);
 
   React.useEffect(() => {
     // initialize selection details
@@ -253,42 +207,75 @@ export const DocLib: React.FC<DocLibProps> = ({ context, listTitle }) => {
   }
 
   const onColumnClick = React.useCallback(
-    (ev: React.MouseEvent<HTMLElement>, column: IColumn): void => {
-      console.log("[onColumnClick] itemsLength", items.length);
-      console.log("[onColumnClick] allItemsLength", allItems.length);
+    (ev, column) => {
+      const newColumns = columns.map(col => ({
+        ...col,
+        isSorted: col.key === column.key,
+        isSortedDescending:
+          col.key === column.key ? !col.isSortedDescending : true
+      }));
 
-      const newColumns = columns.map(col => {
-        if (col.key === column.key) {
-          return {
-            ...col,
-            isSorted: true,
-            isSortedDescending: !col.isSortedDescending,
-          };
-        }
-        return {
-          ...col,
-          isSorted: false,
-          isSortedDescending: true,
-        };
-      });
-
-      const currColumn = newColumns.find(col => col.key === column.key)!;
-
-      const newItems = copyAndSort(
-        allItems, // always sort the full dataset
-        currColumn.fieldName!,
-        currColumn.isSortedDescending
+      const sorted = copyAndSort(
+        allItems,
+        column.fieldName!,
+        newColumns.find(c => c.key === column.key)!.isSortedDescending
       );
 
       setColumns(newColumns);
-      setItems(newItems);
-
-      const direction = currColumn.isSortedDescending ? "descending" : "ascending";
-      setAnnouncedMessage(`Sorted by ${currColumn.name} in ${direction} order.`);
+      setItems(sorted);
     },
-    [items, allItems, columns]
+    [columns, allItems]
   );
 
+  function renderDynamicCell(item: IDocument, field: IFieldInfoDto): JSX.Element | null {
+    const value = item.fields?.[field.internalName];
+
+    if (field.internalName === 'DocIcon') {
+      return <TooltipHost content={`${item.fileType} file`}>
+        <img src={item.iconName} className={classNames.fileIconImg} alt={`${item.fileType} file icon`} />
+      </TooltipHost>
+    } else if (field.internalName === 'LinkFilename') {
+      return <Link onClick={() => onItemInvoked(item)} underline>
+        {item.fields.LinkFilename}
+      </Link>;
+    }
+
+    switch (field.type) {
+      case "Text":
+      case "Note":
+        return <span>{value}</span>;
+
+      case "Number":
+      case "Integer":
+        return <span>{value}</span>;
+
+      case "DateTime":
+        return <span>{value ? new Date(value).toLocaleDateString() : ""}</span>;
+
+      case "User":
+        return <span>{value?.Title ?? ""}</span>;
+
+      case "UserMulti":
+        return (
+          <span>
+            {Array.isArray(value) ? value.map(v => v.Title).join(", ") : ""}
+          </span>
+        );
+
+      case "Lookup":
+        return <span>{value?.Title ?? ""}</span>;
+
+      case "LookupMulti":
+        return (
+          <span>
+            {Array.isArray(value) ? value.map(v => v.Title).join(", ") : ""}
+          </span>
+        );
+
+      default:
+        return <span>{String(value)}</span>;
+    }
+  }
 
   console.log("RENDER itemsLength", items.length);
 
@@ -327,7 +314,18 @@ export const DocLib: React.FC<DocLibProps> = ({ context, listTitle }) => {
       </div>
       <div className={classNames.selectionDetails}>{selectionDetails}</div>
       <Announced message={selectionDetails} />
-      {announcedMessage ? <Announced message={announcedMessage} /> : undefined}
+      {loaderRef.current?.hasMore && (
+        <PrimaryButton
+          text="Load more"
+          onClick={async () => {
+            const nextPage = await loaderRef.current!.loadNextPage();
+            const mapped = nextPage.map(mapDtoToDocument);
+
+            setAllItems(prev => [...prev, ...mapped]);
+            setItems(prev => [...prev, ...mapped]);
+          }}
+        />
+      )}
       {isModalSelection ? (
         <MarqueeSelection selection={selectionRef.current!}>
           <DetailsList
@@ -376,6 +374,7 @@ function mapDtoToDocument(dto: IDocumentDto): IDocument {
     dateModifiedValue: dto.modified.getTime(),
     fileSize: `${dto.fileSize} bytes`,
     fileSizeRaw: dto.fileSize,
+    fields: dto.fields || {},
   };
 }
 
