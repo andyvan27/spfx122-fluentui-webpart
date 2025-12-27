@@ -4,6 +4,8 @@
 
 Sample SPFX 1.22 webpart using FluentUI, React TypeScript, PnPJs, PnPGraph.
 
+Paging, sorting and filtering on basic client side and advanced server side.
+
 ![WebPart](webpart.png)
 
 ## Used SharePoint Framework Version
