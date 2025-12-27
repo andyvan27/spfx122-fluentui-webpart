@@ -1,7 +1,8 @@
 import * as React from 'react';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
-import { DocLib } from './DocLib';
-import { DocLibPaged } from './DocLibPaged';
+// import { DocLib } from './DocLib';
+// import { DocLibPaged } from './DocLibPaged';
+import { DocLibStreamPaged } from './DocLibStreamPaged';
 
 interface ToyListProps {
     listTitle: string;
@@ -30,8 +31,9 @@ export const ToyList: React.FC<ToyListProps> = ({
                 </ul>
             </div>
             <div>
-                <DocLib context={context} listTitle={listTitle} />
-                <DocLibPaged context={context} listTitle={listTitle} listViewName={listViewName} />
+                {/* <DocLib context={context} listTitle={listTitle} />
+                <DocLibPaged context={context} listTitle={listTitle} listViewName={listViewName} /> */}
+                <DocLibStreamPaged context={context} listTitle={listTitle} listViewName={listViewName} />
             </div>
         </>
     );

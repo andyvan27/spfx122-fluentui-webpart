@@ -12,6 +12,8 @@ import { SPService } from '../../../services/SPService';
 import { IDocumentDto } from '../../../dtos/IDocumentDto';
 import { PagedLoader } from '../../../services/paging/PagedLoader';
 import { IFieldInfoDto } from '../../../dtos/IFieldInfoDto';
+import { CamlHelper } from '../../../services/caml/CamlHelper';
+import { set } from '@microsoft/sp-lodash-subset/lib/index';
 
 const classNames = mergeStyleSets({
   fileIconHeaderIcon: {
@@ -87,11 +89,10 @@ interface DocLibProps {
   listViewName?: string;
 }
 
-export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listViewName }) => {
+export const DocLibStreamPaged: React.FC<DocLibProps> = ({ context, listTitle, listViewName }) => {
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  const [allItems, setAllItems] = React.useState<IDocument[]>([]);
   const [items, setItems] = React.useState<IDocument[]>([]);
   const [columns, setColumns] = React.useState<IColumn[]>([]);
 
@@ -110,6 +111,12 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
     });
   }
 
+  const [sortField, setSortField] = React.useState<string | undefined>();
+  const [sortAscending, setSortAscending] = React.useState<boolean>(true);
+
+  const [filterInput, setFilterInput] = React.useState<string>("");
+  const [filterValue, setFilterValue] = React.useState<string>("");
+
   const service = React.useMemo(() => new SPService(context), [context]);
 
   const loaderRef = React.useRef<PagedLoader<IDocumentDto> | null>(null);
@@ -117,36 +124,58 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
   React.useEffect(() => {
     const load = async (): Promise<void> => {
       try {
+        setLoading(true);
+
         // 1. Load dynamic fields
         const fields = await service.getListFields(listTitle, listViewName);
         const viewFieldNames = fields.map(f => f.internalName);
 
+        // 2. Build dynamic columns
         const dynamicColumns: IColumn[] = fields
-          .filter(f => !f.hidden) // skip hidden fields
+          .filter(f => !f.hidden)
           .map(f => ({
             key: f.internalName,
-            name: f.internalName === 'DocIcon' ? '' : f.title,
+            name: f.internalName === "DocIcon" ? "" : f.title,
             fieldName: f.internalName,
-            minWidth: f.internalName === 'DocIcon' ? 16 : 120,
-            iconName: f.internalName === 'DocIcon' ? 'Page' : undefined,
-            maxWidth: f.internalName === 'DocIcon' ? 16 : 300,
+            minWidth: f.internalName === "DocIcon" ? 16 : 120,
+            maxWidth: f.internalName === "DocIcon" ? 16 : 300,
+            iconName: f.internalName === "DocIcon" ? "Page" : undefined,
             isResizable: true,
-            isSorted: true,
-            isSortedDescending: true,
-            data: f.type,
+            isSorted: sortField === f.internalName,
+            isSortedDescending: !sortAscending,
             onRender: (item: IDocument) => renderDynamicCell(item, f)
           }));
 
         setColumns(dynamicColumns);
 
-        // 2. Load items using your existing getDocumentsPaged
-        const iterator = service.getDocumentsPaged(listTitle, viewFieldNames, 5);
+        // 3. Build ViewXml (sorting + filtering)
+        const whereXml = filterValue
+          ? CamlHelper.buildWhereContainsXml("FileLeafRef", filterValue)
+          : undefined;
+
+        const orderByXml = sortField
+          ? CamlHelper.buildOrderByXml(sortField, sortAscending)
+          : undefined;
+
+        const viewXml = CamlHelper.buildViewXml(
+          viewFieldNames,
+          whereXml,
+          orderByXml,
+          5
+        );
+
+        // 4. Start stream-based paging
+        const iterator = service.getDocumentsStreamPaged(
+          listTitle,
+          viewXml
+        );
+
         loaderRef.current = new PagedLoader(iterator);
 
+        // 5. Load first page
         const firstPage = await loaderRef.current.loadNextPage();
         const mapped = firstPage.map(mapDtoToDocument);
 
-        setAllItems(mapped);
         setItems(mapped);
 
       } catch (err) {
@@ -157,8 +186,13 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
     };
 
     load().catch(() => { });
-  }, [context, listTitle, listViewName]);
-
+  }, [
+    listTitle,
+    listViewName,
+    sortField,
+    sortAscending,
+    filterValue
+  ]);
 
   React.useEffect(() => {
     // initialize selection details
@@ -198,34 +232,20 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
     ev: React.FormEvent<HTMLInputElement | HTMLTextAreaElement>,
     text?: string
   ): void {
-    const value = text?.toLowerCase() ?? "";
-    setItems(value ? allItems.filter(i => i.name.toLowerCase().includes(value)) : allItems);
+    setFilterInput(text ?? "");
   }
 
   function onItemInvoked(item: IDocument): void {
     alert(`Item invoked: ${item.name}`);
   }
 
-  const onColumnClick = React.useCallback(
-    (ev, column) => {
-      const newColumns = columns.map(col => ({
-        ...col,
-        isSorted: col.key === column.key,
-        isSortedDescending:
-          col.key === column.key ? !col.isSortedDescending : true
-      }));
+  const onColumnClick = (ev?: React.MouseEvent<HTMLElement>, column?: IColumn): void => {
+    if (!column || !column.fieldName) return;
 
-      const sorted = copyAndSort(
-        allItems,
-        column.fieldName!,
-        newColumns.find(c => c.key === column.key)!.isSortedDescending
-      );
-
-      setColumns(newColumns);
-      setItems(sorted);
-    },
-    [columns, allItems]
-  );
+    const newAsc = column.isSortedDescending; // toggle
+    setSortField(column.fieldName);
+    setSortAscending(newAsc ?? true);
+  };
 
   function renderDynamicCell(item: IDocument, field: IFieldInfoDto): JSX.Element | null {
     const value = item.fields?.[field.internalName];
@@ -236,7 +256,7 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
       </TooltipHost>
     } else if (field.internalName === 'LinkFilename') {
       return <Link onClick={() => onItemInvoked(item)} underline>
-        {item.fields.LinkFilename}
+        {item.fields.FileLeafRef}
       </Link>;
     }
 
@@ -253,7 +273,7 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
         return <span>{value ? new Date(value).toLocaleDateString() : ""}</span>;
 
       case "User":
-        return <span>{value?.Title ?? ""}</span>;
+        return <span>{value[0]?.title ?? ""}</span>;
 
       case "UserMulti":
         return (
@@ -309,7 +329,17 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
           offText="Normal"
           styles={controlStyles}
         />
-        <TextField label="Filter by name:" onChange={onChangeText} styles={controlStyles} />
+        <TextField
+          label="Filter by name:"
+          value={filterInput}
+          onChange={onChangeText}
+          styles={controlStyles}
+        />
+        <PrimaryButton
+          text="Search"
+          onClick={() => setFilterValue(filterInput.toLowerCase())}
+          styles={{ root: { marginTop: 8 } }}
+        />
         <Announced message={`Number of items after filter applied: ${items.length}.`} />
       </div>
       <div className={classNames.selectionDetails}>{selectionDetails}</div>
@@ -320,8 +350,6 @@ export const DocLibPaged: React.FC<DocLibProps> = ({ context, listTitle, listVie
           onClick={async () => {
             const nextPage = await loaderRef.current!.loadNextPage();
             const mapped = nextPage.map(mapDtoToDocument);
-
-            setAllItems(prev => [...prev, ...mapped]);
             setItems(prev => [...prev, ...mapped]);
           }}
         />
@@ -378,57 +406,7 @@ function mapDtoToDocument(dto: IDocumentDto): IDocument {
   };
 }
 
-function copyAndSort<T>(
-  items: T[],
-  columnKey: string,
-  isSortedDescending?: boolean
-): T[] {
-  const key = columnKey as keyof T;
-
-  console.log(
-    "[copyAndSort] start",
-    { columnKey, isSortedDescending, itemsLength: items.length }
-  );
-
-  const result = items.slice().sort((a, b) => {
-    const x = a[key];
-    const y = b[key];
-
-    console.log("[copyAndSort] compare", {
-      key,
-      a,
-      b,
-      x,
-      y,
-      typeX: typeof x,
-      typeY: typeof y,
-    });
-
-    // Handle null or undefined
-    const xMissing = x === null || x === undefined;
-    const yMissing = y === null || y === undefined;
-
-    if (xMissing && yMissing) return 0;
-    if (xMissing) return isSortedDescending ? 1 : -1;
-    if (yMissing) return isSortedDescending ? -1 : 1;
-
-    const xVal = typeof x === "string" ? x.toLowerCase() : x;
-    const yVal = typeof y === "string" ? y.toLowerCase() : y;
-
-    if (xVal === yVal) return 0;
-
-    const res = xVal > yVal ? (isSortedDescending ? -1 : 1) : (isSortedDescending ? 1 : -1);
-    console.log("[copyAndSort] result", { xVal, yVal, res });
-    return res;
-  });
-
-  console.log("[copyAndSort] end", { resultLength: result.length });
-
-  return result;
-}
-
 function getFileIconUrl(ext: string): string {
   if (!ext) return "/_layouts/15/images/icgen.png"; // generic icon
   return `/_layouts/15/images/ic${ext.toLowerCase()}.png`;
 }
-

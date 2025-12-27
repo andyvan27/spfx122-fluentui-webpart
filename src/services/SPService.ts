@@ -12,7 +12,6 @@ import "@pnp/sp/files/item";
 
 import { ISPService } from "./ISPService";
 import { IDocumentDto } from "../dtos/IDocumentDto";
-import { IListItemDto } from "../dtos/IListItemDto";
 import { IFieldInfoDto } from "../dtos/IFieldInfoDto";
 
 import { WebPartContext } from "@microsoft/sp-webpart-base";
@@ -131,53 +130,54 @@ export class SPService implements ISPService {
     }
 
     // -------------------------------------------------------
-    // CAML QUERY: IListItem[]
+    // Stream pages: IDocumentDto[]
     // -------------------------------------------------------
-    public async getItemsByCaml(listTitle: string, viewXml: string): Promise<IListItemDto[]> {
-        const result = await this.sp.web.lists
-            .getByTitle(listTitle)
-            .renderListDataAsStream({ ViewXml: viewXml });
+    public async *getDocumentsStreamPaged(
+        listTitle: string,
+        viewXml: string
+    ): AsyncGenerator<IDocumentDto[], void, unknown> {
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return result.Row.map((i: any) => this.mapToListItem(i));
+        const list = this.sp.web.lists.getByTitle(listTitle);
+
+        let position: string | undefined = undefined;
+
+        while (true) {
+
+            const result = await list.renderListDataAsStream({
+                ViewXml: viewXml,
+                Paging: position
+            });
+
+            // ⭐ Cast to any because PnPjs typing is incomplete
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const raw = result as any;
+
+            const rows = raw?.Row ?? [];
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const dtos = rows.map((r: any) => this.mapStreamRowToDocument(r));
+
+            yield dtos;
+
+            const next = raw?.NextHref;
+            position = next.startsWith("?") ? next.substring(1) : next;
+
+            if (!position) break;
+        }
     }
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private mapToListItem(i: any): IListItemDto {
+    private mapStreamRowToDocument(r: any): IDocumentDto {
         return {
-            id: i.Id,
-            title: i.Title,
-            fields: { ...i }
+            id: r.ID,
+            name: r.FileLeafRef,
+            url: r.FileRef,
+            modified: new Date(r.Modified),
+            modifiedBy: r.Editor?.[0]?.title ?? "",
+            fileSize: r.SMTotalFileStreamSize ?? 0,
+            fileType: r.File_x0020_Type ?? "unknown",
+
+            // ⭐ dynamic bag: contains ALL fields (raw + formatted)
+            fields: { ...r }
         };
-    }
-
-    // -------------------------------------------------------
-    // FOLDER ITEMS: IDocument[]
-    // -------------------------------------------------------
-    public async getFolderItems(serverRelativeFolderPath: string): Promise<IDocumentDto[]> {
-        const files = await this.sp.web
-            .getFolderByServerRelativePath(serverRelativeFolderPath)
-            .files
-            .expand("ListItemAllFields")
-            .select(
-                "Name",
-                "ServerRelativeUrl",
-                "TimeLastModified",
-                "Length",
-                "UniqueId",
-                "ListItemAllFields/Id"
-            )();
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return files.map((f: any) => ({
-            id: f.ListItemAllFields?.Id ?? 0,
-            name: f.Name,
-            url: f.ServerRelativeUrl,
-            modified: new Date(f.TimeLastModified),
-            modifiedBy: "",
-            fileSize: f.Length,
-            fileType: f.Name.split(".").pop() ?? "",
-            fields: { ...f }
-        }));
     }
 }

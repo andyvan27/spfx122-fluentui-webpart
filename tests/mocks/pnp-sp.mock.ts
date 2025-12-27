@@ -1,6 +1,8 @@
 // A minimal interface describing the fluent items chain
 interface IItemsChain {
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   select: jest.Mock<IItemsChain, any>;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   expand: jest.Mock<() => any, any>;
 }
 

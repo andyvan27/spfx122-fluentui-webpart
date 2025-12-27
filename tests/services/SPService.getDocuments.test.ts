@@ -1,5 +1,5 @@
 import { SPService } from "../../src/services/SPService";
-import { spfi, __chain, __finalCall } from "../mocks/pnp-sp.mock";
+import { __finalCall } from "../mocks/pnp-sp.mock";
 
 describe("SPService.getDocuments", () => {
   it("returns normalized document DTOs", async () => {
@@ -18,6 +18,7 @@ describe("SPService.getDocuments", () => {
     // Override the final "()"
     __finalCall.mockReturnValue(mockItems);
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const service = new SPService({} as any);
     const result = await service.getDocuments("Documents");
 

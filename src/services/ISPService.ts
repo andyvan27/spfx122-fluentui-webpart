@@ -1,5 +1,4 @@
 import { IDocumentDto } from "../dtos/IDocumentDto";
-import { IListItemDto } from "../dtos/IListItemDto";
 import { IFieldInfoDto } from "../dtos/IFieldInfoDto";
 
 export interface ISPService {
@@ -13,10 +12,10 @@ export interface ISPService {
    * Loads documents from a SharePoint document library in a paged manner.
    */
   getDocumentsPaged(
-        listTitle: string,
-        viewFieldNames: string[],
-        pageSize?: number
-    ): AsyncGenerator<IDocumentDto[], void, unknown>;
+    listTitle: string,
+    viewFieldNames: string[],
+    pageSize?: number
+  ): AsyncGenerator<IDocumentDto[], void, unknown>;
 
   /**
    * Loads list fields (columns) for dynamic column generation.
@@ -24,12 +23,10 @@ export interface ISPService {
   getListFields(listTitle: string, viewName?: string): Promise<IFieldInfoDto[]>
 
   /**
-   * Executes a CAML query and returns raw items mapped into IListItem.
+   * Loads list items from a SharePoint list in a paged manner.
    */
-  getItemsByCaml(listTitle: string, viewXml: string): Promise<IListItemDto[]>;
-
-  /**
-   * Loads items from a specific folder (useful for document libraries).
-   */
-  getFolderItems(serverRelativeFolderPath: string): Promise<IDocumentDto[]>;
+  getDocumentsStreamPaged(
+    listTitle: string,
+    viewXml: string,
+  ): AsyncGenerator<IDocumentDto[], void, unknown>
 }
