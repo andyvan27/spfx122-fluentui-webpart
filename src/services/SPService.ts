@@ -25,6 +25,44 @@ export class SPService implements ISPService {
     }
 
     // -------------------------------------------------------
+    // LIST FIELDS: IFieldInfo[]
+    // -------------------------------------------------------
+    public async getListFields(listTitle: string, viewName?: string): Promise<IFieldInfoDto[]> {
+        const list = this.sp.web.lists.getByTitle(listTitle);
+
+        // 1. Get the view (default or named)
+        let view;
+
+        if (viewName) {
+            view = list.views.getByTitle(viewName);
+        } else {
+            const defaultViewInfo = await list.defaultView.select("Id")();
+            view = list.views.getById(defaultViewInfo.Id);
+        }
+
+        // 2. Get internal field names in the view (ordered)
+        const viewFieldNames: string[] = (await view.fields()).Items;
+
+        // 3. Fetch ALL fields (REST cannot filter by IN)
+        const allFields = await list.fields
+            .select("InternalName", "Title", "TypeAsString", "Hidden", "ReadOnlyField")();
+
+        // 4. Filter in JS to preserve view order
+        const filtered = viewFieldNames
+            .map(name => allFields.find(f => f.InternalName === name))
+            .filter((f): f is IFieldInfo => f !== undefined);
+
+        // 5. Map to DTO
+        return filtered.map(f => ({
+            internalName: f.InternalName,
+            title: f.Title,
+            type: f.TypeAsString,
+            hidden: f.Hidden,
+            readOnly: f.ReadOnlyField
+        }));
+    }
+
+    // -------------------------------------------------------
     // DOCUMENT LIBRARY: Strongly typed IDocument[]
     // -------------------------------------------------------
     public async getDocuments(listTitle: string): Promise<IDocumentDto[]> {
@@ -89,44 +127,6 @@ export class SPService implements ISPService {
             // ⭐ Convert raw SP items → IDocumentDto[]
             yield page.map(i => this.mapToDocument(i));
         }
-    }
-
-    // -------------------------------------------------------
-    // LIST FIELDS: IFieldInfo[]
-    // -------------------------------------------------------
-    public async getListFields(listTitle: string, viewName?: string): Promise<IFieldInfoDto[]> {
-        const list = this.sp.web.lists.getByTitle(listTitle);
-
-        // 1. Get the view (default or named)
-        let view;
-
-        if (viewName) {
-            view = list.views.getByTitle(viewName);
-        } else {
-            const defaultViewInfo = await list.defaultView.select("Id")();
-            view = list.views.getById(defaultViewInfo.Id);
-        }
-
-        // 2. Get internal field names in the view (ordered)
-        const viewFieldNames: string[] = (await view.fields()).Items;
-
-        // 3. Fetch ALL fields (REST cannot filter by IN)
-        const allFields = await list.fields
-            .select("InternalName", "Title", "TypeAsString", "Hidden", "ReadOnlyField")();
-
-        // 4. Filter in JS to preserve view order
-        const filtered = viewFieldNames
-            .map(name => allFields.find(f => f.InternalName === name))
-            .filter((f): f is IFieldInfo => f !== undefined);
-
-        // 5. Map to DTO
-        return filtered.map(f => ({
-            internalName: f.InternalName,
-            title: f.Title,
-            type: f.TypeAsString,
-            hidden: f.Hidden,
-            readOnly: f.ReadOnlyField
-        }));
     }
 
     // -------------------------------------------------------

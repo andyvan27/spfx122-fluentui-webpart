@@ -301,10 +301,10 @@ export const DocLib: React.FC<DocLibProps> = ({ context, listTitle }) => {
 
   return (
     <>
-      <Text>
-        Note: While focusing a row, pressing enter or double clicking will execute onItemInvoked, which in this
-        example will show an alert.
-      </Text>
+      <h4>REST-based DocLib</h4>
+      <h5>
+        Basic custom document library listing from {listTitle} library with client side sorting and filtering.
+      </h5>
       <div className={classNames.controlWrapper}>
         <Toggle
           label="Enable compact mode"

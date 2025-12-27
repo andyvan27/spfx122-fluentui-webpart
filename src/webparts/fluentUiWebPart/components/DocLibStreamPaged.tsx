@@ -5,7 +5,7 @@ import { Announced } from '@fluentui/react/lib/Announced';
 import { DetailsList, DetailsListLayoutMode, Selection, SelectionMode, IColumn } from '@fluentui/react/lib/DetailsList';
 import { MarqueeSelection } from '@fluentui/react/lib/MarqueeSelection';
 import { mergeStyleSets } from '@fluentui/react/lib/Styling';
-import { Link, PrimaryButton, TooltipHost } from '@fluentui/react';
+import { IconButton, Link, PrimaryButton, TooltipHost } from '@fluentui/react';
 import { Text } from '@fluentui/react/lib/Text';
 import { WebPartContext } from '@microsoft/sp-webpart-base';
 import { SPService } from '../../../services/SPService';
@@ -13,7 +13,6 @@ import { IDocumentDto } from '../../../dtos/IDocumentDto';
 import { PagedLoader } from '../../../services/paging/PagedLoader';
 import { IFieldInfoDto } from '../../../dtos/IFieldInfoDto';
 import { CamlHelper } from '../../../services/caml/CamlHelper';
-import { set } from '@microsoft/sp-lodash-subset/lib/index';
 
 const classNames = mergeStyleSets({
   fileIconHeaderIcon: {
@@ -308,10 +307,10 @@ export const DocLibStreamPaged: React.FC<DocLibProps> = ({ context, listTitle, l
 
   return (
     <>
-      <Text>
-        Note: While focusing a row, pressing enter or double clicking will execute onItemInvoked, which in this
-        example will show an alert.
-      </Text>
+      <h4>Stream-based DocLib (renderListDataAsStream)</h4>
+      <h5>
+        Advanced custom document library listing from {listTitle} library with server side paging, sorting and filtering.
+      </h5>
       <div className={classNames.controlWrapper}>
         <Toggle
           label="Enable compact mode"
@@ -329,17 +328,23 @@ export const DocLibStreamPaged: React.FC<DocLibProps> = ({ context, listTitle, l
           offText="Normal"
           styles={controlStyles}
         />
-        <TextField
-          label="Filter by name:"
-          value={filterInput}
-          onChange={onChangeText}
-          styles={controlStyles}
-        />
-        <PrimaryButton
-          text="Search"
-          onClick={() => setFilterValue(filterInput.toLowerCase())}
-          styles={{ root: { marginTop: 8 } }}
-        />
+        <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+          <TextField
+            placeholder="Filter by name"
+            value={filterInput}
+            onChange={onChangeText}
+            styles={{
+              ...controlStyles,
+              root: { width: 250 },
+            }}
+          />
+          <IconButton
+            iconProps={{ iconName: "Search" }}
+            title="Search"
+            ariaLabel="Search"
+            onClick={() => setFilterValue(filterInput.toLowerCase())}
+          />
+        </div>
         <Announced message={`Number of items after filter applied: ${items.length}.`} />
       </div>
       <div className={classNames.selectionDetails}>{selectionDetails}</div>

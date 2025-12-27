@@ -4,9 +4,26 @@
 
 Sample SPFX 1.22 webpart using FluentUI, React TypeScript, PnPJs, PnPGraph.
 
-Paging, sorting and filtering on basic client side and advanced server side.
+Paging, sorting and filtering from basic client side to advanced server side handling.
 
-![WebPart](webpart.png)
+<p align="center">
+  <img src="./images/WebPart.png" alt="WebPart" />
+</p>
+<p align="center">
+  <img src="./images/DocLib.png" alt="DocLib" />
+</p>
+<p align="center">
+  <img src="./images/DocLibPaged.png" alt="DocLibPaged" />
+</p>
+<p align="center">
+  <img src="./images/DocLibStreamPaged.png" alt="DocLibStreamPaged" />
+</p>
+<p align="center">
+  <img src="./images/Site.png" alt="Deployed to Site Page" />
+</p>
+<p align="center">
+  <img src="./images/Team.png" alt="Deployed to Teams Tab" />
+</p>
 
 ## Used SharePoint Framework Version
 
